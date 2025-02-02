@@ -547,6 +547,10 @@ class SigLipVisionTower(nn.Module):
 
         self.image_processor = SigLipImageProcessor()
 
+        # Start my code
+        self.saved_attention_scores = None  # (n_images, num_layers, seq_len, seq_len)
+        # End my code
+
         if not delay_load:
             rank0_print(f"Loading vision tower: {vision_tower}")
             self.load_model()
@@ -574,11 +578,17 @@ class SigLipVisionTower(nn.Module):
         self.is_loaded = True
 
     def forward(self, images):
+        # Start my code
+        self.saved_attention_scores = []
+        # End my code
         if type(images) is list:
             image_features = []
             for image in images:
-                image_forward_out = self.vision_tower(image.to(device=self.device, dtype=self.dtype).unsqueeze(0), output_hidden_states=True)
+                image_forward_out = self.vision_tower(image.to(device=self.device, dtype=self.dtype).unsqueeze(0), output_hidden_states=True, output_attentions=True)
                 image_feature = image_forward_out.hidden_states[-1].to(image.dtype)
+                # Start my code
+                self.saved_attention_scores.append(image_forward_out.attentions)
+                # End my code
                 assert image_features.shape[-2] == 729
                 image_features.append(image_feature)
         else:
@@ -618,3 +628,8 @@ class SigLipVisionTower(nn.Module):
     @property
     def image_size(self):
         return self.config.image_size
+
+    # Start my code    
+    def get_saved_attentions(self):
+        return self.saved_attention_scores
+    # End my code
