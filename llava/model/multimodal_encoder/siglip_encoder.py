@@ -579,7 +579,8 @@ class SigLipVisionTower(nn.Module):
 
     def forward(self, images):
         # Start my code
-        self.saved_attention_scores = []
+        if self.saved_attention_scores is None:
+            self.saved_attention_scores = []
         # End my code
         if type(images) is list:
             image_features = []
